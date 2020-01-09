@@ -3,9 +3,7 @@
  */
 import cookie from 'cookie';
 import debug from 'debug';
-import { parse } from 'qs';
-import url from 'url';
-import { assign, includes, isObjectLike, isUndefined, omit, pickBy, times } from 'lodash';
+import { assign, includes, isObjectLike, isUndefined, omit, times } from 'lodash';
 import { loadScript } from '@automattic/load-script';
 
 /**
@@ -560,9 +558,16 @@ const analytics = {
 			// Record all `utm` marketing parameters as event properties on the page view event
 			// so we can analyze their performance with our analytics tools
 			if ( window.location ) {
-				const parsedUrl = url.parse( window.location.href );
-				const urlParams = parse( parsedUrl.query );
-				const utmParams = pickBy( urlParams, ( value, key ) => key.startsWith( 'utm_' ) );
+				const urlParams = new URL( window.location.href ).searchParams;
+				const utmParams = {};
+
+				if ( urlParams ) {
+					for ( const key of urlParams.keys() ) {
+						if ( key.startsWith( 'utm_' ) ) {
+							utmParams[ key ] = urlParams.get( key );
+						}
+					}
+				}
 
 				eventProperties = assign( eventProperties, utmParams );
 			}
@@ -699,9 +704,10 @@ const analytics = {
 
 			const referrer = window.location.href;
 			const parsedUrl = urlParseAmpCompatible( referrer );
-			const affiliateId = parsedUrl.query.aff || parsedUrl.query.affiliate;
-			const campaignId = parsedUrl.query.cid;
-			const subId = parsedUrl.query.sid;
+			const affiliateId =
+				parsedUrl?.searchParams.get( 'aff' ) || parsedUrl?.searchParams.get( 'affiliate' );
+			const campaignId = parsedUrl?.searchParams.get( 'cid' );
+			const subId = parsedUrl?.searchParams.get( 'sid' );
 
 			if ( affiliateId && ! isNaN( affiliateId ) ) {
 				analytics.tracks.recordEvent( 'calypso_refer_visit', {
