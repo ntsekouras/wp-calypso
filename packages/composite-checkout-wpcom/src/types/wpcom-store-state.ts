@@ -1,4 +1,4 @@
-/**
+/*
  * The data model used in the ContactDetailsFormFields component.
  * This belongs in components/domains/contact-details-form-fields, but until
  * that component is rewritten in TypeScript we'll put it here.
@@ -19,20 +19,20 @@ export type DomainContactDetails = {
 	fax: string;
 };
 
-/**
+/*
  * All child components in composite checkout are controlled -- they accept
  * data from their parents and evaluate callbacks when edited, rather than
  * managing their own state. Hooks providing this data in turn need some extra
  * data on each field: specifically whether it has been edited by the user
  * or passed validation. We wrap this extra data into an object type.
  */
-interface ManagedValue< T > {
+export interface ManagedValue< T > {
 	value: T;
 	isTouched: boolean; // Has value been edited by the user?
 	isValid: boolean; // Has value passed validation?
 }
 
-function initialManagedValue< T >( x: T ): ManagedValue< T > {
+export function initialManagedValue< T >( x: T ): ManagedValue< T > {
 	return {
 		value: x,
 		isTouched: false,
@@ -40,11 +40,14 @@ function initialManagedValue< T >( x: T ): ManagedValue< T > {
 	};
 }
 
-function touchIfDifferent< T >( newValue: T, oldData: ManagedValue< T > ): ManagedValue< T > {
+export function touchIfDifferent< T >(
+	newValue: T,
+	oldData: ManagedValue< T >
+): ManagedValue< T > {
 	return newValue === oldData.value ? oldData : { ...oldData, value: newValue, isTouched: true };
 }
 
-/**
+/*
  * The wpcom store hook itself won't store a DomainContactDetails
  * object directly, but a managed version of it. (We could probably express
  * this more nicely with higher kinded types but it does the job.)
@@ -82,7 +85,7 @@ export const defaultManagedDomainContactDetails: ManagedDomainContactDetails = {
 	fax: initialManagedValue( '' ),
 };
 
-/**
+/*
  * Convert a ManagedDomainContactDetails object (used internally by the
  * WPCOM store state hook) into a DomainContactDetails object (used by
  * the ContactDetailsFormFields component)
@@ -107,7 +110,7 @@ export function prepareDomainContactDetails(
 	};
 }
 
-/**
+/*
  * This utility updates a ManagedDomainContactDetails object in
  * response to a DomainContactDetails object which, we assume,
  * came from user input.
