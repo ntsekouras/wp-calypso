@@ -28,8 +28,13 @@ import notices from 'notices';
 import getUpgradePlanSlugFromPath from 'state/selectors/get-upgrade-plan-slug-from-path';
 import { isJetpackSite } from 'state/sites/selectors';
 import isAtomicSite from 'state/selectors/is-site-automated-transfer';
+import { ContactDetailsFormFields } from 'components/domains/contact-details-form-fields';
 
 const debug = debugFactory( 'calypso:composite-checkout' );
+
+const ContactDetailsFormFieldsWrapper = ( {} ) => {
+	return <ContactDetailsFormFields />;
+};
 
 const registry = createRegistry();
 const { select } = registry;
