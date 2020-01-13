@@ -1,11 +1,8 @@
 /**
  * External dependencies
  */
-
 import debugFactory from 'debug';
 import page from 'page';
-import { parse } from 'qs';
-import url from 'url';
 import { startsWith } from 'lodash';
 import React from 'react';
 import ReactDom from 'react-dom';
@@ -44,21 +41,33 @@ import { setRoute as setRouteAction } from 'state/ui/actions';
 import { getSelectedSiteId, getSectionName } from 'state/ui/selectors';
 import { setNextLayoutFocus, activateNextLayoutFocus } from 'state/ui/layout-focus/actions';
 import setupGlobalKeyboardShortcuts from 'lib/keyboard-shortcuts/global';
+import { getUrlParts } from 'lib/url/url-parts';
 
 const debug = debugFactory( 'calypso' );
+
+function convertParamsToObject( searchParams ) {
+	const result = {};
+	for ( const key of searchParams.keys() ) {
+		result[ key ] = searchParams.get( key );
+	}
+	return result;
+}
 
 const setupContextMiddleware = reduxStore => {
 	page( '*', ( context, next ) => {
 		// page.js url parsing is broken so we had to disable it with `decodeURLComponents: false`
-		const parsed = url.parse( context.canonicalPath, true );
-		context.prevPath = parsed.path === context.path ? false : parsed.path;
-		context.query = parsed.query;
+		const parsed = getUrlParts( context.canonicalPath );
+		const path = parsed.pathname + parsed.search || null;
+		context.prevPath = path === context.path ? false : path;
+		context.query = convertParamsToObject( parsed.searchParams );
 
 		context.hashstring = ( parsed.hash && parsed.hash.substring( 1 ) ) || '';
 		// set `context.hash` (we have to parse manually)
 		if ( context.hashstring ) {
 			try {
-				context.hash = parse( context.hashstring );
+				context.hash = convertParamsToObject(
+					new globalThis.URLSearchParams( context.hashstring )
+				);
 			} catch ( e ) {
 				debug( 'failed to query-string parse `location.hash`', e );
 				context.hash = {};
