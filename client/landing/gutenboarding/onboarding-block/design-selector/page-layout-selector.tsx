@@ -9,18 +9,9 @@ import { useSelect, useDispatch } from '@wordpress/data';
 /**
  * Internal dependencies
  */
-import {
-	Card as CardComponent,
-	CardFooter as CardFooterComponent,
-	CardMedia as CardMediaComponent,
-	Icon,
-} from '@wordpress/components';
+import { Card, CardFooter, CardMedia, Icon } from '@wordpress/components';
 import { removeQueryArgs } from '@wordpress/url';
 import { STORE_KEY as ONBOARD_STORE } from '../../stores/onboard';
-
-const Card = CardComponent.withComponent( 'button' );
-const CardFooter = CardFooterComponent.withComponent( 'span' );
-const CardMedia = CardMediaComponent.withComponent( 'span' );
 
 type Template = import('@automattic/data-stores').VerticalsTemplates.Template;
 
@@ -48,18 +39,19 @@ const PageLayoutSelector: FunctionComponent< Props > = ( { templates } ) => {
 								'is-selected': pageLayouts.includes( template.slug ),
 							} ) }
 							onClick={ () => togglePageLayout( template ) }
+							as="button"
 							key={ template.slug }
 						>
 							<span className="page-layout-selector__selected-indicator">
 								<Icon icon="yes" size={ 24 } />
 							</span>
-							<CardMedia className="page-layout-selector__card-media">
+							<CardMedia className="page-layout-selector__card-media" as="span">
 								<img
 									alt={ template.description }
 									src={ removeQueryArgs( template.preview, 'w' ) }
 								/>
 							</CardMedia>
-							<CardFooter className="page-layout-selector__card-footer">
+							<CardFooter className="page-layout-selector__card-footer" as="span">
 								{ template.title }
 							</CardFooter>
 						</Card>

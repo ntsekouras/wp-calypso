@@ -9,10 +9,7 @@ import classnames from 'classnames';
 /**
  * Internal dependencies
  */
-import { Card as CardComponent, CardMedia as CardMediaComponent } from '@wordpress/components';
-
-const Card = CardComponent.withComponent( 'button' );
-const CardMedia = CardMediaComponent.withComponent( 'span' );
+import { Card, CardMedia } from '@wordpress/components';
 
 const gridWidth = 960;
 const srcSet = ( src: string, widths: number[] ) =>
@@ -39,8 +36,9 @@ const DesignCard: FunctionComponent< Props > = ( {
 		style={ style }
 		aria-haspopup="dialog"
 		aria-controls={ dialogId }
+		as="button"
 	>
-		<CardMedia>
+		<CardMedia as="span">
 			<img
 				width={ 480 }
 				height={ 360 }
