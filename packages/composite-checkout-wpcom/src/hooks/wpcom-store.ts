@@ -63,8 +63,8 @@ export function useWpcomStore( registerStore, onEvent ) {
 	}
 
 	registerStore( 'wpcom', {
-		reducer( state: WpcomStoreState | null, action: WpcomStoreAction ): WpcomStoreState {
-			const checkedState = state === null ? initialWpcomStoreState : state;
+		reducer( state: WpcomStoreState | undefined, action: WpcomStoreAction ): WpcomStoreState {
+			const checkedState = state === undefined ? initialWpcomStoreState : state;
 			return {
 				contact: contactReducer( checkedState.contact, action ),
 				siteId: siteIdReducer( checkedState.siteId, action ),
