@@ -23,7 +23,7 @@ export default class WpcomCheckoutErrorBoundary extends React.Component {
 		this.state = initialWPCheckoutErrorBoundaryState( props.componentTitle );
 	}
 
-	static getDerivedStateFromError( error ) {
+	static getDerivedStateFromError() {
 		return { hasError: true };
 	}
 
