@@ -8,7 +8,12 @@ import { useTranslate } from 'i18n-calypso';
 import PropTypes from 'prop-types';
 import debugFactory from 'debug';
 import { useSelector, useDispatch } from 'react-redux';
-import { WPCheckout, useWpcomStore, useShoppingCart } from '@automattic/composite-checkout-wpcom';
+import {
+	WPCheckout,
+	WPCheckoutErrorBoundary,
+	useWpcomStore,
+	useShoppingCart,
+} from '@automattic/composite-checkout-wpcom';
 import { CheckoutProvider, createRegistry } from '@automattic/composite-checkout';
 
 /**
@@ -28,12 +33,16 @@ import notices from 'notices';
 import getUpgradePlanSlugFromPath from 'state/selectors/get-upgrade-plan-slug-from-path';
 import { isJetpackSite } from 'state/sites/selectors';
 import isAtomicSite from 'state/selectors/is-site-automated-transfer';
-import { ContactDetailsFormFields } from 'components/domains/contact-details-form-fields';
+import ContactDetailsFormFields from 'components/domains/contact-details-form-fields';
 
 const debug = debugFactory( 'calypso:composite-checkout' );
 
-const ContactDetailsFormFieldsWrapper = ( {} ) => {
-	return <ContactDetailsFormFields />;
+const renderDomainFields = contactDetails => {
+	return (
+		<WPCheckoutErrorBoundary componentTitle="ContactDetailsFormFields">
+			<ContactDetailsFormFields contactDetails={ contactDetails } />;
+		</WPCheckoutErrorBoundary>
+	);
 };
 
 const registry = createRegistry();
@@ -147,6 +156,7 @@ export default function CompositeCheckout( {
 				removeItem={ removeItem }
 				changePlanLength={ changePlanLength }
 				siteId={ siteId }
+				renderDomainFields={ renderDomainFields }
 			/>
 		</CheckoutProvider>
 	);

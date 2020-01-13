@@ -14,8 +14,9 @@ import { useHasDomainsInCart } from '../hooks/has-domains';
 import Field from './field';
 import { SummaryLine, SummaryDetails, SummarySpacerLine } from './summary-details';
 import { LeftColumn, RightColumn } from './ie-fallback';
+import { prepareDomainContactDetails } from '../types';
 
-export default function WPContactForm( { summary, isComplete, isActive } ) {
+export default function WPContactForm( { summary, isComplete, isActive, renderDomainFields } ) {
 	const isDomainFieldsVisible = useHasDomainsInCart();
 	const contactInfo = useSelect( select => select( 'wpcom' ).getContactInfo() );
 	const setters = useDispatch( 'wpcom' );
@@ -29,13 +30,17 @@ export default function WPContactForm( { summary, isComplete, isActive } ) {
 
 	return (
 		<BillingFormFields>
-			{ isDomainFieldsVisible && <DomainFields /> }
+			{ isDomainFieldsVisible && renderDomainFields( prepareDomainContactDetails( contactInfo ) ) }
 
-			<TaxFields section="contact" taxInfo={ contactInfo } setters={ setters } />
+			<TaxFields
+				section="contact"
+				taxInfo={ { postalCode: '11111', country: 'US' } }
+				setters={ setters }
+			/>
 
 			<PhoneNumberField
 				id="contact-phone-number"
-				phoneNumber={ contactInfo.phoneNumber }
+				phoneNumber={ { value: '867-5309', isTouched: false, isValid: true } }
 				onChange={ setters.setContactField }
 			/>
 
