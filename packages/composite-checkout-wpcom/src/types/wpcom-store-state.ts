@@ -1,4 +1,71 @@
 /*
+ * All child components in composite checkout are controlled -- they accept
+ * data from their parents and evaluate callbacks when edited, rather than
+ * managing their own state. Hooks providing this data in turn need some extra
+ * data on each field: specifically whether it has been edited by the user
+ * or passed validation. We wrap this extra data into an object type.
+ */
+export interface ManagedValue< T > {
+	value: T;
+	isTouched: boolean; // Has value been edited by the user?
+	isValid: boolean; // Has value passed validation?
+}
+
+export function initialManagedValue< T >( value: T ): ManagedValue< T > {
+	return {
+		value: value,
+		isTouched: false,
+		isValid: false,
+	};
+}
+
+export function touchIfDifferent< T >(
+	newValue: T,
+	oldData: ManagedValue< T >
+): ManagedValue< T > {
+	return newValue === oldData.value ? oldData : { ...oldData, value: newValue, isTouched: true };
+}
+
+/*
+ * The wpcom store hook stores an object with all the contact info
+ * which is used to share state across fields where appropriate.
+ * Each value keeps track of whether it has been edited and validated.
+ */
+export type ManagedContactDetails = {
+	firstName: ManagedValue< string >;
+	lastName: ManagedValue< string >;
+	organization: ManagedValue< string >;
+	email: ManagedValue< string >;
+	alternateEmail: ManagedValue< string >;
+	phone: ManagedValue< string >;
+	address1: ManagedValue< string >;
+	address2: ManagedValue< string >;
+	city: ManagedValue< string >;
+	state: ManagedValue< string >;
+	postalCode: ManagedValue< string >;
+	countryCode: ManagedValue< string >;
+	fax: ManagedValue< string >;
+	vatId: ManagedValue< string >;
+};
+
+export const defaultManagedContactDetails: ManagedContactDetails = {
+	firstName: initialManagedValue( '' ),
+	lastName: initialManagedValue( '' ),
+	organization: initialManagedValue( '' ),
+	email: initialManagedValue( '' ),
+	alternateEmail: initialManagedValue( '' ),
+	phone: initialManagedValue( '' ),
+	address1: initialManagedValue( '' ),
+	address2: initialManagedValue( '' ),
+	city: initialManagedValue( '' ),
+	state: initialManagedValue( '' ),
+	postalCode: initialManagedValue( '' ),
+	countryCode: initialManagedValue( '' ),
+	fax: initialManagedValue( '' ),
+	vatId: initialManagedValue( '' ),
+};
+
+/*
  * The data model used in the ContactDetailsFormFields component.
  * This belongs in components/domains/contact-details-form-fields, but until
  * that component is rewritten in TypeScript we'll put it here.
@@ -20,78 +87,12 @@ export type DomainContactDetails = {
 };
 
 /*
- * All child components in composite checkout are controlled -- they accept
- * data from their parents and evaluate callbacks when edited, rather than
- * managing their own state. Hooks providing this data in turn need some extra
- * data on each field: specifically whether it has been edited by the user
- * or passed validation. We wrap this extra data into an object type.
- */
-export interface ManagedValue< T > {
-	value: T;
-	isTouched: boolean; // Has value been edited by the user?
-	isValid: boolean; // Has value passed validation?
-}
-
-export function initialManagedValue< T >( x: T ): ManagedValue< T > {
-	return {
-		value: x,
-		isTouched: false,
-		isValid: false,
-	};
-}
-
-export function touchIfDifferent< T >(
-	newValue: T,
-	oldData: ManagedValue< T >
-): ManagedValue< T > {
-	return newValue === oldData.value ? oldData : { ...oldData, value: newValue, isTouched: true };
-}
-
-/*
- * The wpcom store hook itself won't store a DomainContactDetails
- * object directly, but a managed version of it. (We could probably express
- * this more nicely with higher kinded types but it does the job.)
- * Each field keeps track of whether it has been edited and validated.
- */
-export type ManagedDomainContactDetails = {
-	firstName: ManagedValue< string >;
-	lastName: ManagedValue< string >;
-	organization: ManagedValue< string >;
-	email: ManagedValue< string >;
-	alternateEmail: ManagedValue< string >;
-	phone: ManagedValue< string >;
-	address1: ManagedValue< string >;
-	address2: ManagedValue< string >;
-	city: ManagedValue< string >;
-	state: ManagedValue< string >;
-	postalCode: ManagedValue< string >;
-	countryCode: ManagedValue< string >;
-	fax: ManagedValue< string >;
-};
-
-export const defaultManagedDomainContactDetails: ManagedDomainContactDetails = {
-	firstName: initialManagedValue( '' ),
-	lastName: initialManagedValue( '' ),
-	organization: initialManagedValue( '' ),
-	email: initialManagedValue( '' ),
-	alternateEmail: initialManagedValue( '' ),
-	phone: initialManagedValue( '' ),
-	address1: initialManagedValue( '' ),
-	address2: initialManagedValue( '' ),
-	city: initialManagedValue( '' ),
-	state: initialManagedValue( '' ),
-	postalCode: initialManagedValue( '' ),
-	countryCode: initialManagedValue( '' ),
-	fax: initialManagedValue( '' ),
-};
-
-/*
- * Convert a ManagedDomainContactDetails object (used internally by the
+ * Convert a ManagedContactDetails object (used internally by the
  * WPCOM store state hook) into a DomainContactDetails object (used by
  * the ContactDetailsFormFields component)
  */
 export function prepareDomainContactDetails(
-	details: ManagedDomainContactDetails
+	details: ManagedContactDetails
 ): DomainContactDetails {
 	return {
 		firstName: details.firstName.value,
@@ -111,39 +112,60 @@ export function prepareDomainContactDetails(
 }
 
 /*
- * This utility updates a ManagedDomainContactDetails object in
- * response to a DomainContactDetails object which, we assume,
- * came from user input.
+ * Helper type which bundles the field updaters in a single object
+ * to help keep import lists under control. All updaters should
+ * assume input came from the user.
  */
-export function updateManagedDomainContactDetails(
-	oldDetails: ManagedDomainContactDetails,
-	newDetails: DomainContactDetails
-): ManagedDomainContactDetails {
-	return {
-		firstName: touchIfDifferent( newDetails.firstName, oldDetails.firstName ),
-		lastName: touchIfDifferent( newDetails.lastName, oldDetails.lastName ),
-		organization: touchIfDifferent( newDetails.organization, oldDetails.organization ),
-		email: touchIfDifferent( newDetails.email, oldDetails.email ),
-		alternateEmail: touchIfDifferent( newDetails.alternateEmail, oldDetails.alternateEmail ),
-		phone: touchIfDifferent( newDetails.phone, oldDetails.phone ),
-		address1: touchIfDifferent( newDetails.address1, oldDetails.address1 ),
-		address2: touchIfDifferent( newDetails.address2, oldDetails.address2 ),
-		city: touchIfDifferent( newDetails.city, oldDetails.city ),
-		state: touchIfDifferent( newDetails.state, oldDetails.state ),
-		postalCode: touchIfDifferent( newDetails.postalCode, oldDetails.postalCode ),
-		countryCode: touchIfDifferent( newDetails.countryCode, oldDetails.countryCode ),
-		fax: touchIfDifferent( newDetails.fax, oldDetails.fax ),
-	};
-}
+export type ManagedContactDetailsUpdaters = {
+	updateDomainFields: ( ManagedContactDetails, DomainContactDetails ) => ManagedContactDetails;
+	updatePhone: ( ManagedContactDetails, string ) => ManagedContactDetails;
+	updateVatId: ( ManagedContactDetails, string ) => ManagedContactDetails;
+};
+
+export const managedContactDetailsUpdaters: ManagedContactDetailsUpdaters = {
+	updateDomainFields: (
+		oldDetails: ManagedContactDetails,
+		newDetails: DomainContactDetails
+	): ManagedContactDetails => {
+		return {
+			...oldDetails,
+			firstName: touchIfDifferent( newDetails.firstName, oldDetails.firstName ),
+			lastName: touchIfDifferent( newDetails.lastName, oldDetails.lastName ),
+			organization: touchIfDifferent( newDetails.organization, oldDetails.organization ),
+			email: touchIfDifferent( newDetails.email, oldDetails.email ),
+			alternateEmail: touchIfDifferent( newDetails.alternateEmail, oldDetails.alternateEmail ),
+			phone: touchIfDifferent( newDetails.phone, oldDetails.phone ),
+			address1: touchIfDifferent( newDetails.address1, oldDetails.address1 ),
+			address2: touchIfDifferent( newDetails.address2, oldDetails.address2 ),
+			city: touchIfDifferent( newDetails.city, oldDetails.city ),
+			state: touchIfDifferent( newDetails.state, oldDetails.state ),
+			postalCode: touchIfDifferent( newDetails.postalCode, oldDetails.postalCode ),
+			countryCode: touchIfDifferent( newDetails.countryCode, oldDetails.countryCode ),
+			fax: touchIfDifferent( newDetails.fax, oldDetails.fax ),
+		};
+	},
+
+	updatePhone: ( oldDetails: ManagedContactDetails, newPhone: string ): ManagedContactDetails => {
+		return {
+			...oldDetails,
+			phone: touchIfDifferent( newPhone, oldDetails.phone ),
+		};
+	},
+
+	updateVatId: ( oldDetails: ManagedContactDetails, newVatId: string ): ManagedContactDetails => {
+		return {
+			...oldDetails,
+			vatId: touchIfDifferent( newVatId, oldDetails.vatId ),
+		};
+	},
+};
 
 export type WpcomStoreState = {
 	siteId: string;
-	contact: ManagedDomainContactDetails;
-	vatId: ManagedValue< string >;
+	contact: ManagedContactDetails;
 };
 
 export const initialWpcomStoreState: WpcomStoreState = {
 	siteId: '',
-	contact: defaultManagedDomainContactDetails,
-	vatId: initialManagedValue( '' ),
+	contact: defaultManagedContactDetails,
 };

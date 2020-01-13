@@ -24,16 +24,13 @@ import {
 	CheckoutCartTotal,
 } from './types/checkout-cart';
 import {
-	ManagedValue,
-	initialManagedValue,
-	touchIfDifferent,
 	WpcomStoreState,
 	initialWpcomStoreState,
+	ManagedContactDetails,
+	defaultManagedContactDetails,
+	managedContactDetailsUpdaters,
 	DomainContactDetails,
-	ManagedDomainContactDetails,
-	defaultManagedDomainContactDetails,
 	prepareDomainContactDetails,
-	updateManagedDomainContactDetails,
 } from './types/wpcom-store-state';
 
 export {
@@ -53,14 +50,11 @@ export {
 	CheckoutCartItem,
 	CheckoutCartItemAmount,
 	CheckoutCartTotal,
-	ManagedValue,
-	initialManagedValue,
-	touchIfDifferent,
 	WpcomStoreState,
 	initialWpcomStoreState,
+	ManagedContactDetails,
+	defaultManagedContactDetails,
+	managedContactDetailsUpdaters,
 	DomainContactDetails,
-	ManagedDomainContactDetails,
-	defaultManagedDomainContactDetails,
 	prepareDomainContactDetails,
-	updateManagedDomainContactDetails,
 };
