@@ -119,6 +119,8 @@ export function prepareDomainContactDetails(
 export type ManagedContactDetailsUpdaters = {
 	updateDomainFields: ( ManagedContactDetails, DomainContactDetails ) => ManagedContactDetails;
 	updatePhone: ( ManagedContactDetails, string ) => ManagedContactDetails;
+	updatePostalCode: ( ManagedContactDetails, string ) => ManagedContactDetails;
+	updateCountryCode: ( ManagedContactDetails, string ) => ManagedContactDetails;
 	updateVatId: ( ManagedContactDetails, string ) => ManagedContactDetails;
 };
 
@@ -152,6 +154,26 @@ export const managedContactDetailsUpdaters: ManagedContactDetailsUpdaters = {
 		};
 	},
 
+	updatePostalCode: (
+		oldDetails: ManagedContactDetails,
+		newPostalCode: string
+	): ManagedContactDetails => {
+		return {
+			...oldDetails,
+			postalCode: touchIfDifferent( newPostalCode, oldDetails.postalCode ),
+		};
+	},
+
+	updateCountryCode: (
+		oldDetails: ManagedContactDetails,
+		newCountryCode: string
+	): ManagedContactDetails => {
+		return {
+			...oldDetails,
+			countryCode: touchIfDifferent( newCountryCode, oldDetails.countryCode ),
+		};
+	},
+
 	updateVatId: ( oldDetails: ManagedContactDetails, newVatId: string ): ManagedContactDetails => {
 		return {
 			...oldDetails,
@@ -163,9 +185,13 @@ export const managedContactDetailsUpdaters: ManagedContactDetailsUpdaters = {
 export type WpcomStoreState = {
 	siteId: string;
 	contact: ManagedContactDetails;
+	contactDetailsValidator: ( ManagedContactDetails ) => ManagedContactDetails;
 };
 
 export const initialWpcomStoreState: WpcomStoreState = {
 	siteId: '',
 	contact: defaultManagedContactDetails,
+	contactDetailsValidator: details => {
+		return details;
+	},
 };
