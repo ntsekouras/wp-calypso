@@ -7,19 +7,24 @@ import { useRef } from 'react';
  * Internal dependencies
  */
 import {
-	ManagedValue,
-	touchIfDifferent,
 	WpcomStoreState,
 	initialWpcomStoreState,
 	DomainContactDetails,
-	ManagedDomainContactDetails,
-	updateManagedDomainContactDetails,
+	ManagedContactDetails,
+	managedContactDetailsUpdaters as updaters,
 } from '../types';
 
 type WpcomStoreAction =
-	| { type: 'SET_CONTACT_DETAILS'; payload: DomainContactDetails }
+	| {
+			type: 'VALIDATE_CONTACT_DETAILS';
+			payload: ( ManagedContactDetails ) => ManagedContactDetails;
+	  }
+	| { type: 'UPDATE_CONTACT_DETAILS'; payload: DomainContactDetails }
 	| { type: 'SET_SITE_ID'; payload: string }
-	| { type: 'SET_VAT_ID'; payload: string };
+	| { type: 'UPDATE_VAT_ID'; payload: string }
+	| { type: 'UPDATE_PHONE'; payload: string }
+	| { type: 'UPDATE_POSTAL_CODE'; payload: string }
+	| { type: 'UPDATE_COUNTRY_CODE'; payload: string };
 
 export function useWpcomStore( registerStore, onEvent ) {
 	// Only register once
@@ -30,12 +35,20 @@ export function useWpcomStore( registerStore, onEvent ) {
 	registerIsComplete.current = true;
 
 	function contactReducer(
-		state: ManagedDomainContactDetails,
+		state: ManagedContactDetails,
 		action: WpcomStoreAction
-	): ManagedDomainContactDetails {
+	): ManagedContactDetails {
 		switch ( action.type ) {
-			case 'SET_CONTACT_DETAILS':
-				return updateManagedDomainContactDetails( state, action.payload );
+			case 'UPDATE_CONTACT_DETAILS':
+				return updaters.updateDomainFields( state, action.payload );
+			case 'UPDATE_VAT_ID':
+				return updaters.updateVatId( state, action.payload );
+			case 'UPDATE_PHONE':
+				return updaters.updatePhone( state, action.payload );
+			case 'UPDATE_POSTAL_CODE':
+				return updaters.updatePostalCode( state, action.payload );
+			case 'UPDATE_COUNTRY_CODE':
+				return updaters.updateCountryCode( state, action.payload );
 			default:
 				return state;
 		}
@@ -50,31 +63,41 @@ export function useWpcomStore( registerStore, onEvent ) {
 		}
 	}
 
-	function vatIdReducer(
-		state: ManagedValue< string >,
-		action: WpcomStoreAction
-	): ManagedValue< string > {
-		switch ( action.type ) {
-			case 'SET_VAT_ID':
-				return touchIfDifferent( action.payload, state );
-			default:
-				return state;
-		}
-	}
-
 	registerStore( 'wpcom', {
 		reducer( state: WpcomStoreState | undefined, action: WpcomStoreAction ): WpcomStoreState {
 			const checkedState = state === undefined ? initialWpcomStoreState : state;
 			return {
 				contact: contactReducer( checkedState.contact, action ),
 				siteId: siteIdReducer( checkedState.siteId, action ),
-				vatId: vatIdReducer( checkedState.vatId, action ),
+				contactDetailsValidator: checkedState.contactDetailsValidator,
 			};
 		},
 
 		actions: {
+			validateContactDetails(
+				payload: ( ManagedContactDetails ) => ManagedContactDetails
+			): WpcomStoreAction {
+				return { type: 'VALIDATE_CONTACT_DETAILS', payload };
+			},
+
 			setSiteId( payload: string ): WpcomStoreAction {
 				return { type: 'SET_SITE_ID', payload };
+			},
+
+			updateContactDetails( payload: DomainContactDetails ): WpcomStoreAction {
+				return { type: 'UPDATE_CONTACT_DETAILS', payload };
+			},
+
+			updatePhone( payload: string ): WpcomStoreAction {
+				return { type: 'UPDATE_PHONE', payload };
+			},
+
+			updatePostalCode( payload: string ): WpcomStoreAction {
+				return { type: 'UPDATE_POSTAL_CODE', payload };
+			},
+
+			updateCountryCode( payload: string ): WpcomStoreAction {
+				return { type: 'UPDATE_COUNTRY_CODE', payload };
 			},
 
 			// TODO: type this; need to use error messages from contact form
@@ -91,8 +114,8 @@ export function useWpcomStore( registerStore, onEvent ) {
 				return { type: 'CONTACT_SET_FIELD', payload: { key, field } };
 			},
 
-			setVatId( payload: string ): WpcomStoreAction {
-				return { type: 'SET_VAT_ID', payload: payload };
+			updateVatId( payload: string ): WpcomStoreAction {
+				return { type: 'UPDATE_VAT_ID', payload: payload };
 			},
 		},
 
@@ -101,7 +124,7 @@ export function useWpcomStore( registerStore, onEvent ) {
 				return state.siteId;
 			},
 
-			getContactInfo( state: WpcomStoreState ): ManagedDomainContactDetails {
+			getContactInfo( state: WpcomStoreState ): ManagedContactDetails {
 				return state.contact;
 			},
 		},
