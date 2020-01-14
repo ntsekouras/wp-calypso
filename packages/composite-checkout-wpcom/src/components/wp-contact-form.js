@@ -25,6 +25,7 @@ const contactDetailsFormat = ( { hasDomainsInCart } ) => {
 
 const renderContactDetails = ( {
 	translate,
+	domainName,
 	hasDomainsInCart,
 	contactInfo,
 	renderDomainContactFields,
@@ -42,8 +43,10 @@ const renderContactDetails = ( {
 						) }
 					</DomainContactFieldsDescription>
 					{ renderDomainContactFields(
+						[ domainName ],
 						prepareDomainContactDetails( contactInfo ),
-						setters.updateContactDetails
+						setters.updateContactDetails,
+						setters.applyDomainContactValidationResults
 					) }
 					{ requiresVatId && <VatIdField /> }
 				</React.Fragment>
@@ -80,6 +83,7 @@ export default function WPContactForm( {
 	const hasDomainsInCart = useHasDomainsInCart();
 	const contactInfo = useSelect( select => select( 'wpcom' ).getContactInfo() );
 	const setters = useDispatch( 'wpcom' );
+	const domainName = 'example.com'; // TODO: get the actual domain name
 
 	if ( summary && isComplete ) {
 		return <ContactFormSummary />;
@@ -92,6 +96,7 @@ export default function WPContactForm( {
 		<BillingFormFields>
 			{ renderContactDetails( {
 				translate,
+				domainName,
 				hasDomainsInCart,
 				contactInfo,
 				renderDomainContactFields,
