@@ -16,8 +16,68 @@ import { SummaryLine, SummaryDetails, SummarySpacerLine } from './summary-detail
 import { LeftColumn, RightColumn } from './ie-fallback';
 import { prepareDomainContactDetails } from '../types';
 
-export default function WPContactForm( { summary, isComplete, isActive, renderDomainFields } ) {
-	const isDomainFieldsVisible = useHasDomainsInCart();
+const contactDetailsFormat = ( { hasDomainsInCart } ) => {
+	if ( hasDomainsInCart ) {
+		return 'DOMAINS';
+	}
+	return 'DEFAULT';
+};
+
+const renderContactDetails = ( {
+	translate,
+	hasDomainsInCart,
+	contactInfo,
+	renderDomainContactFields,
+	setters,
+} ) => {
+	const format = contactDetailsFormat( { hasDomainsInCart } );
+	const requiresVatId = isEligibleForVat( contactInfo.countryCode.value );
+	switch ( format ) {
+		case 'DOMAINS':
+			return (
+				<React.Fragment>
+					<DomainContactFieldsDescription>
+						{ translate(
+							'Registering a domain name requires valid contact information. Privacy Protection is included for all eligible domains to protect your personal information.'
+						) }
+					</DomainContactFieldsDescription>
+					{ renderDomainContactFields(
+						prepareDomainContactDetails( contactInfo ),
+						setters.updateContactDetails
+					) }
+					{ requiresVatId && <VatIdField /> }
+				</React.Fragment>
+			);
+		default:
+			return (
+				<React.Fragment>
+					<TaxFields
+						section="contact-geo"
+						taxInfo={ {
+							postalCode: contactInfo.postalCode,
+							country: contactInfo.countryCode,
+						} }
+						setters={ setters }
+					/>
+					<PhoneNumberField
+						id="contact-phone-number"
+						phoneNumber={ contactInfo.phone }
+						onChange={ setters.updatePhone }
+					/>
+					{ requiresVatId && <VatIdField /> }
+				</React.Fragment>
+			);
+	}
+};
+
+export default function WPContactForm( {
+	summary,
+	isComplete,
+	isActive,
+	renderDomainContactFields,
+} ) {
+	const translate = useTranslate();
+	const hasDomainsInCart = useHasDomainsInCart();
 	const contactInfo = useSelect( select => select( 'wpcom' ).getContactInfo() );
 	const setters = useDispatch( 'wpcom' );
 
@@ -30,21 +90,13 @@ export default function WPContactForm( { summary, isComplete, isActive, renderDo
 
 	return (
 		<BillingFormFields>
-			{ isDomainFieldsVisible && renderDomainFields( prepareDomainContactDetails( contactInfo ) ) }
-
-			<TaxFields
-				section="contact"
-				taxInfo={ { postalCode: '11111', country: 'US' } }
-				setters={ setters }
-			/>
-
-			<PhoneNumberField
-				id="contact-phone-number"
-				phoneNumber={ { value: '867-5309', isTouched: false, isValid: true } }
-				onChange={ setters.setContactField }
-			/>
-
-			{ isElligibleForVat() && <VatIdField /> }
+			{ renderContactDetails( {
+				translate,
+				hasDomainsInCart,
+				contactInfo,
+				renderDomainContactFields,
+				setters,
+			} ) }
 		</BillingFormFields>
 	);
 }
@@ -78,9 +130,10 @@ const FieldRow = styled( GridRow )`
 	}
 `;
 
-function isElligibleForVat() {
+function isEligibleForVat( country ) {
 	//TODO: Detect whether people are in EU or AU and return true if they are
-	return false;
+	const countriesWithVAT = [ 'AU' ];
+	return countriesWithVAT.includes( country );
 }
 
 function DomainFieldsCheckbox( { toggleVisibility, isDomainContactVisible } ) {
@@ -286,9 +339,7 @@ function PhoneNumberField( { id, isRequired, phoneNumber, onChange } ) {
 			type="text"
 			label={ isRequired ? translate( 'Phone number (Optional)' ) : translate( 'Phone number' ) }
 			value={ phoneNumber.value }
-			onChange={ value =>
-				onChange( 'phoneNumber', { value, isTouched: true, isValid: isRequired ? !! value : true } )
-			}
+			onChange={ onChange }
 			autoComplete="tel"
 			isError={ phoneNumber.isTouched && ! phoneNumber.isValid }
 			errorMessage={ translate( 'This field is required.' ) }
@@ -306,7 +357,7 @@ PhoneNumberField.propTypes = {
 function VatIdField() {
 	const translate = useTranslate();
 	const { vatId } = useSelect( select => select( 'wpcom' ).getContactInfo() );
-	const { setVatId } = useDispatch( 'wpcom' );
+	const { updateVatId } = useDispatch( 'wpcom' );
 
 	return (
 		<FormField
@@ -314,7 +365,7 @@ function VatIdField() {
 			type="Number"
 			label={ translate( 'VAT identification number' ) }
 			value={ vatId.value }
-			onChange={ value => setVatId( { value, isTouched: true, isValid: !! value } ) }
+			onChange={ updateVatId }
 			isError={ vatId.isTouched && ! vatId.isValid }
 			errorMessage={ translate( 'This field is required.' ) }
 		/>
@@ -324,7 +375,7 @@ function VatIdField() {
 function TaxFields( { section, taxInfo, setters } ) {
 	const translate = useTranslate();
 	const { postalCode, country } = taxInfo;
-	const { setContactField } = setters;
+	const { updatePostalCode, updateCountryCode } = setters;
 
 	const isZip = isZipOrPostal() === 'zip';
 	return (
@@ -335,9 +386,7 @@ function TaxFields( { section, taxInfo, setters } ) {
 					type="text"
 					label={ isZip ? translate( 'Zip code' ) : translate( 'Postal code' ) }
 					value={ postalCode.value }
-					onChange={ value =>
-						setContactField( 'postalCode', { value, isTouched: true, isValid: !! value } )
-					}
+					onChange={ updatePostalCode }
 					autoComplete={ section + ' postal-code' }
 					isError={ postalCode.isTouched && ! postalCode.isValid }
 					errorMessage={ translate( 'This field is required.' ) }
@@ -350,9 +399,7 @@ function TaxFields( { section, taxInfo, setters } ) {
 					type="text"
 					label={ translate( 'Country' ) }
 					value={ country.value }
-					onChange={ value =>
-						setContactField( 'country', { value, isTouched: true, isValid: !! value } )
-					}
+					onChange={ updateCountryCode }
 					autoComplete={ section + ' country' }
 					isError={ country.isTouched && ! country.isValid }
 					errorMessage={ translate( 'This field is required.' ) }
@@ -372,28 +419,6 @@ function isZipOrPostal() {
 	//TODO: Add location detection to return "zip" or "postal"
 	return 'postal';
 }
-
-function DomainFields() {
-	const translate = useTranslate();
-	const contactInfo = useSelect( select => select( 'wpcom' ).getContactInfo() );
-	const setters = useDispatch( 'wpcom' );
-
-	return (
-		<DomainContactFields>
-			<DomainContactFieldsDescription>
-				{ translate(
-					'Registering a domain name requires valid contact information. Privacy Protection is included for all eligible domains to protect your personal information.'
-				) }
-			</DomainContactFieldsDescription>
-
-			<AddressFields section="contact" contactInfo={ contactInfo } setters={ setters } />
-		</DomainContactFields>
-	);
-}
-
-const DomainContactFields = styled.div`
-	margin: 16px 0 24px;
-`;
 
 const DomainContactFieldsDescription = styled.p`
 	font-size: 14px;
@@ -419,7 +444,7 @@ function ContactFormSummary() {
 	const postalAndCountry = joinNonEmptyValues(
 		', ',
 		contactInfo.postalCode.value,
-		contactInfo.country.value
+		contactInfo.countryCode.value
 	);
 
 	return (
