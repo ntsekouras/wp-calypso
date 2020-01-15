@@ -50,58 +50,6 @@ const wpcomGetCart = ( ...args ) => wpcom.getCart( ...args );
 const wpcomSetCart = ( ...args ) => wpcom.setCart( ...args );
 const wpcomGetStoredCards = ( ...args ) => wpcom.getStoredCards( ...args );
 
-function CountrySelectMenu( {
-	translate,
-	onChange,
-	isDisabled,
-	isError,
-	errorMessage,
-	currentValue,
-} ) {
-	const dispatch = useDispatch();
-	const countriesList = useSelector( state => getCountries( state, 'payments' ) );
-
-	debug( 'Rendering CountrySelectMenu with list', countriesList );
-
-	useEffect( () => {
-		if ( countriesList?.length <= 0 ) {
-			debug( 'Countries list is empty; dispatching request for data' );
-			dispatch( fetchPaymentCountries() );
-		}
-	}, [ countriesList, dispatch ] );
-
-	const countrySelectorId = 'country-selector';
-	const countrySelectorLabelId = 'country-selector-label';
-	const countrySelectorDescriptionId = 'country-selector-description';
-
-	return (
-		<FormFieldAnnotation
-			labelText={ translate( 'Country' ) }
-			isError={ isError }
-			isDisabled={ isDisabled }
-			formFieldId={ countrySelectorId }
-			labelId={ countrySelectorLabelId }
-			descriptionId={ countrySelectorDescriptionId }
-			errorDescription={ errorMessage }
-		>
-			<FormCountrySelect
-				id={ countrySelectorId }
-				countriesList={ [
-					{ code: '', name: translate( 'Select Country' ) },
-					{ code: null, name: '' },
-					...countriesList,
-				] }
-				translate={ translate }
-				onChange={ onChange }
-				disabled={ isDisabled }
-				value={ currentValue }
-				aria-labelledby={ countrySelectorLabelId }
-				aria-describedby={ countrySelectorDescriptionId }
-			/>
-		</FormFieldAnnotation>
-	);
-}
-
 export default function CompositeCheckout( {
 	siteSlug,
 	siteId,
@@ -293,4 +241,56 @@ function createItemToAddToCart( { planSlug, plan, isJetpackNotAtomic } ) {
 function handleCheckoutEvent( action ) {
 	debug( 'checkout event', action );
 	// TODO: record stats
+}
+
+function CountrySelectMenu( {
+	translate,
+	onChange,
+	isDisabled,
+	isError,
+	errorMessage,
+	currentValue,
+} ) {
+	const dispatch = useDispatch();
+	const countriesList = useSelector( state => getCountries( state, 'payments' ) );
+
+	debug( 'Rendering CountrySelectMenu with list', countriesList );
+
+	useEffect( () => {
+		if ( countriesList?.length <= 0 ) {
+			debug( 'Countries list is empty; dispatching request for data' );
+			dispatch( fetchPaymentCountries() );
+		}
+	}, [ countriesList, dispatch ] );
+
+	const countrySelectorId = 'country-selector';
+	const countrySelectorLabelId = 'country-selector-label';
+	const countrySelectorDescriptionId = 'country-selector-description';
+
+	return (
+		<FormFieldAnnotation
+			labelText={ translate( 'Country' ) }
+			isError={ isError }
+			isDisabled={ isDisabled }
+			formFieldId={ countrySelectorId }
+			labelId={ countrySelectorLabelId }
+			descriptionId={ countrySelectorDescriptionId }
+			errorDescription={ errorMessage }
+		>
+			<FormCountrySelect
+				id={ countrySelectorId }
+				countriesList={ [
+					{ code: '', name: translate( 'Select Country' ) },
+					{ code: null, name: '' },
+					...countriesList,
+				] }
+				translate={ translate }
+				onChange={ onChange }
+				disabled={ isDisabled }
+				value={ currentValue }
+				aria-labelledby={ countrySelectorLabelId }
+				aria-describedby={ countrySelectorDescriptionId }
+			/>
+		</FormFieldAnnotation>
+	);
 }
